@@ -1,0 +1,58 @@
+name: Publish Python Package with UV
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install UV
+        run: |
+          # 安装 uv (替代 pip/pip-tools/build)
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH  # 确保 uv 在 PATH 中
+
+      - name: Build with UV
+        run: |
+          uv pip install -e .[dev]  # 安装开发依赖（可选）
+          uv pip install --upgrade pip setuptools wheel  # 确保基础工具最新
+          uv build  # 使用 uv 构建包（替代 python -m build）
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/*
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # PyPI 可信发布必需
+    environment:
+      name: pypi
+      # url: https://pypi.org/project/your-package-name/  # 可选：PyPI 项目链接
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
