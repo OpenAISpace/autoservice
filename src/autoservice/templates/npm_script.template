@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# 设置错误时退出
+set -e
+
+# 检查工作目录
+if [ ! -d "{working_dir}" ]; then
+    echo "错误: 工作目录 {working_dir} 不存在"
+    exit 1
+fi
+
+# 进入工作目录
+cd {working_dir}
+
+# 检查并使用可用的版本管理器
+if command -v nvm >/dev/null 2>&1; then
+    # 如果有 nvm
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    # 如果存在 .nvmrc 文件则使用指定版本
+    [ -f ".nvmrc" ] && nvm use
+elif command -v fnm >/dev/null 2>&1; then
+    # 如果有 fnm
+    eval "$(fnm env --use-on-cd)"
+elif [ -d "$HOME/.n" ]; then
+    # 如果有 n
+    export N_PREFIX="$HOME/.n"
+    export PATH="$N_PREFIX/bin:$PATH"
+fi
+
+# 检查 node 是否可用
+if ! command -v node >/dev/null 2>&1; then
+    echo "错误: 未找到 Node.js，请确保已安装 Node.js 或者某个版本管理器"
+    exit 1
+fi
+
+# 检查 npm 是否可用
+if ! command -v npm >/dev/null 2>&1; then
+    echo "错误: 未找到 npm，请确保 npm 已正确安装"
+    exit 1
+fi
+
+# 显示当前使用的 Node.js 版本
+echo "使用的 Node.js 版本: $(node -v)"
+echo "使用的 npm 版本: $(npm -v)"
+
+# 执行实际命令
+echo "执行命令: {command}"
+{command} 
