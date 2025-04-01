@@ -26,8 +26,7 @@ jobs:
 
       - name: Build with UV
         run: |
-          uv pip install -e .[dev]  # 安装开发依赖（可选）
-          uv pip install --upgrade pip setuptools wheel  # 确保基础工具最新
+          uv sync
           uv build  # 使用 uv 构建包（替代 python -m build）
 
       - name: Upload artifacts
